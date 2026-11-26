@@ -37,3 +37,7 @@ header nav button{padding:5px 8px;font-size:.86rem}
 .seal-welcome p{background:#fffafc;border-radius:18px;padding:10px 14px;margin:0;max-width:220px}
 .study-stage .seal{width:clamp(62px,18vw,104px);flex:none}
 .question-kind{font-weight:700;color:#674285;margin-bottom:6px}
+
+.chapter-review{margin-top:20px}
+#writing-pad{display:block;width:min(100%,240px);height:auto;touch-action:none;margin:12px 0;border:2px solid #bb9bc9;border-radius:12px;background:linear-gradient(90deg,transparent 49.5%,#e6d6ee 49.5% 50.5%,transparent 50.5%),linear-gradient(transparent 49.5%,#e6d6ee 49.5% 50.5%,transparent 50.5%),#fff}
+[hidden]{display:none!important}

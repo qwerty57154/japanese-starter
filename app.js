@@ -62,7 +62,7 @@ function resources() {
     <p>看完影片後，回到卡片練習。先遮住拼音，自己試念，再按「聽發音」確認。</p>
     <ul><li><a href="https://www.youtube.com/shorts/b69m9uAhLiI" target="_blank" rel="noopener noreferrer">在 YouTube 觀看原影片</a></li>
     <li><a href="https://www.youtube.com/watch?v=DvjltwT2H2g&amp;list=PLhGTbECrW2wSAWsVPTwGCJFWTV2W8pPKm" target="_blank" rel="noopener noreferrer">影片說明欄的詳細教學</a></li>
-    <li><a href="https://www.wusjp.com/日文五十音學習/" target="_blank" rel="noopener noreferrer">字源與 4–4–2 記憶法（作者的文字說明）</a></li>
+    <li><a href="https://www.wusjp.com/日文五十音學習/" target="_blank" rel="noopener noreferrer">假名字源（作者的文字說明）</a></li>
     <li><a href="https://www.wusjp.com/" target="_blank" rel="noopener noreferrer">吳氏日文官網</a></li></ul>
     </section>`);
 }
@@ -75,8 +75,11 @@ function home() {
     <p>認識平假名，練一句生活日文，再用小測驗檢查自己記住了多少。</p>
     <p>已完成 ${completed}／${lessons.length} 課</p><progress aria-label="課程完成進度" value="${completed}" max="${lessons.length}"></progress>
     <button class="primary" id="start">${next < 0 ? '重溫第一課' : '開始第 ' + (next + 1) + ' 課'}</button></section>
-    <h2>平假名入門</h2><div class="lessons">${lessons.map((lesson, index) =>
-    `<button class="lesson" data-lesson="${index}"><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>`);
+    <h2>第一章｜平假名</h2><div class="lessons">${lessons.map((lesson, index) =>
+    `<button class="lesson" data-lesson="${index}"><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>
+    <section class="panel chapter-review"><h2>第一章總複習</h2><p>${completed ? '從已完成的課程隨機抽題，每次最多 15 題。' : '完成任一課後，就能從學過的內容抽題。'}</p>
+    <button class="primary" id="mixed" ${completed ? '' : 'disabled'}>開始總複習</button></section>`);
+  document.querySelector('#mixed').onclick = reviewMixed;
   document.querySelector('#start').onclick = () => study(Math.max(0, next));
   screen.querySelectorAll('[data-lesson]').forEach(button => {
     button.onclick = () => study(Number(button.dataset.lesson));
@@ -88,26 +91,18 @@ function study(index, step = 0) {
   const lesson = lessons[index];
   const card = lesson.cards[step];
   const text = card ? card.letter : lesson.phrase;
-  const group = kanaGroups[index < 4 ? 0 : index < 8 ? 1 : 2];
   const origin = kanaOrigins[index].split(' ')[step];
-  const [picture, reminder] = card ? memory[index][step] : ['💬', lesson.tip];
   render(`<section class="panel"><h1>第 ${index + 1} 課 · ${card ? '假名卡片' : '生活用語'}</h1>
     <progress aria-label="本課學習進度" value="${step + 1}" max="${lesson.cards.length + 1}"></progress>
     <div class="study-stage">${seal}<div class="kana" lang="ja">${text}</div></div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
     <p>${card ? '聽一次，跟念兩次，再試著看著假名自己念。' : lesson.meaning}</p>
-    <aside class="memory-tip"><span class="memory-picture" aria-hidden="true">${picture}</span><div><h2>${card ? '記憶小叮嚀' : '開口小叮嚀'}</h2><p>${reminder}</p></div></aside>
-    ${card ? `<aside class="memory-tip"><div><h2>海豹小叮嚀｜字源＋分組記憶</h2>
-      <p><strong>${origin} → <span lang="ja">${card.letter}</span></strong>。先看漢字和假名各一眼，再遮住假名，試著寫出來並念「${card.sound}」。</p>
-      ${step === 0 ? `<p><strong>行首分成四、四、二拍：</strong><span lang="ja">${kanaGroups.map(([letters]) => letters).join(' ／ ')}</span>。</p>
-      <p>這課先念所在的一組：${group[1]}。再按「聽發音」，確認今天的行首「${card.letter}」怎麼念。</p>` : ''}
-      <button id="tip-source">看方法來源</button></div></aside>` : ''}
+    <aside class="memory-tip"><div><h2>${card ? '海豹小叮嚀｜字源' : '開口小叮嚀'}</h2>
+      <p>${card ? `<strong>${origin} → <span lang="ja">${card.letter}</span></strong>` : lesson.tip}</p></div></aside>
     <div class="row"><button id="listen">聽發音</button>
     ${step ? '<button id="previous">上一張</button>' : ''}
     <button class="primary" id="next">${card ? '下一張' : '開始小測驗'}</button></div>
     <p class="feedback" id="audio" role="status"></p></section>`);
   document.querySelector('#listen').onclick = () => speak(text, document.querySelector('#audio'));
-  const source = document.querySelector('#tip-source');
-  if (source) source.onclick = resources;
   const previous = document.querySelector('#previous');
   if (previous) previous.onclick = () => study(index, step - 1);
   document.querySelector('#next').onclick = () => card ? study(index, step + 1) : quiz(makeQuestions(index), index);
@@ -131,6 +126,10 @@ function makeQuestions(index) {
       correct: card.letter, sound: card.sound, audio,
       options: shuffle([card.letter, ...shuffle(cards.filter(other => other !== card)).slice(0, 2).map(other => other.letter)])
     }))),
+    ...shuffle(cards).map(card => ({
+      id: index + '-dictation-' + card.letter, correct: card.letter,
+      sound: card.sound, audio: true, writing: true
+    })),
     {id: index + '-phrase', phrase: lesson.phrase, correct: lesson.meaning,
       options: shuffle([lesson.meaning, ...shuffle(lessons.filter(other => other !== lesson)).slice(0, 2).map(other => other.meaning)])}
   ];
@@ -139,29 +138,35 @@ function makeQuestions(index) {
 function quiz(questions, lessonIndex, position = 0, score = 0) {
   if (hasSpeech) window.speechSynthesis.cancel();
   const question = questions[position];
-  const review = lessonIndex === null;
+  const wrongReview = lessonIndex === null;
+  const mixed = lessonIndex === 'mixed';
+  const review = wrongReview || mixed;
+  const title = mixed ? '總複習' : wrongReview ? '錯題複習' : '小測驗';
   if (!question) {
     if (!review) { saved.done[lessonIndex] = score; store(); }
     render(`<section class="panel">${seal}<h1>${review ? '複習完成' : '本課完成'}</h1><p>答對 ${score}／${questions.length} 題</p>
-      <div class="row"><button class="primary" id="back">回首頁</button><button id="again">${review ? '再看錯題' : '再練一次'}</button></div></section>`);
+      <div class="row"><button class="primary" id="back">回首頁</button><button id="again">${mixed ? '重新抽題' : wrongReview ? '再看錯題' : '再練一次'}</button></div></section>`);
     document.querySelector('#back').onclick = home;
-    document.querySelector('#again').onclick = () => review ? reviewWrong() : quiz(makeQuestions(lessonIndex), lessonIndex);
+    document.querySelector('#again').onclick = () => mixed ? reviewMixed() : wrongReview ? reviewWrong() : quiz(makeQuestions(lessonIndex), lessonIndex);
     return;
   }
   const listen = question.audio && hasSpeech;
   const prompt = question.phrase ? `<span lang="ja">${question.phrase}</span> 是什麼意思？`
+    : question.writing && listen ? '播放發音，用手指在方格寫出假名，再對照正解。'
     : listen ? '聽發音，選出對應的假名。' : `哪個假名念作 <strong>${question.sound}</strong>？`;
-  render(`<section class="panel"><h1>${review ? '錯題複習' : '小測驗'} · ${position + 1}／${questions.length}</h1>
-    <p class="question-kind">${question.phrase ? '生活用語' : listen ? '聽音辨認' : '看拼音指認'}</p><p>${prompt}</p>${listen ? '<div class="row"><button id="play">播放題目</button><button id="hint">看拼音提示</button></div><p id="audio" role="status"></p>' : ''}
-    <div class="options">${question.options.map((option, index) => `<button data-answer="${index}" ${question.phrase ? '' : 'lang="ja"'}>${option}</button>`).join('')}</div>
+  render(`<section class="panel"><h1>${title} · ${position + 1}／${questions.length}</h1>
+    <p class="question-kind">${question.phrase ? '生活用語' : question.writing ? '聽音手寫' : listen ? '聽音辨認' : '看拼音指認'}</p><p>${prompt}</p>${listen ? '<div class="row"><button id="play">播放題目</button><button id="hint">看拼音提示</button></div><p id="audio" role="status"></p>' : ''}
+    ${question.writing ? `<canvas id="writing-pad" width="240" height="240" aria-label="假名手寫格"></canvas>
+      <div class="row"><button id="erase">清除重寫</button><button class="primary" id="check-writing" disabled>看正解</button></div>
+      <p id="solution" hidden></p><div class="row" id="self-check" hidden><button id="right-writing">我寫對了</button><button id="wrong-writing">需要再練</button></div>`
+    : `<div class="options">${question.options.map((option, index) => `<button data-answer="${index}" ${question.phrase ? '' : 'lang="ja"'}>${option}</button>`).join('')}</div>`}
     <p class="feedback" id="feedback" role="status"></p><button class="primary" id="continue" hidden>繼續</button></section>`);
   if (listen) {
     document.querySelector('#play').onclick = () => speak(question.correct, document.querySelector('#audio'));
     document.querySelector('#hint').onclick = () => { document.querySelector('#audio').textContent = '拼音：' + question.sound; };
   }
   const answers = screen.querySelectorAll('[data-answer]');
-  answers.forEach(button => button.onclick = () => {
-    const correct = question.options[Number(button.dataset.answer)] === question.correct;
+  function answerQuestion(correct) {
     if (!correct) saved.wrong[question.id] = question;
     else if (review) delete saved.wrong[question.id];
     store();
@@ -173,7 +178,73 @@ function quiz(questions, lessonIndex, position = 0, score = 0) {
     next.textContent = position + 1 === questions.length ? '看結果' : '下一題';
     next.onclick = () => quiz(questions, lessonIndex, position + 1, score + Number(correct));
     next.focus();
-  });
+  }
+  answers.forEach(button => button.onclick = () =>
+    answerQuestion(question.options[Number(button.dataset.answer)] === question.correct));
+  if (question.writing) setupWriting(question, answerQuestion);
+}
+
+function setupWriting(question, submit) {
+  const pad = document.querySelector('#writing-pad');
+  const ctx = pad.getContext('2d');
+  const check = document.querySelector('#check-writing');
+  const erase = document.querySelector('#erase');
+  const controls = document.querySelector('#self-check');
+  const solution = document.querySelector('#solution');
+  let pointer = null;
+  ctx.strokeStyle = '#493255';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function point(event) {
+    const bounds = pad.getBoundingClientRect();
+    return [(event.clientX - bounds.left) * pad.width / bounds.width,
+      (event.clientY - bounds.top) * pad.height / bounds.height];
+  }
+
+  pad.onpointerdown = event => {
+    if (pointer !== null || !solution.hidden || event.button !== 0) return;
+    pointer = event.pointerId;
+    pad.setPointerCapture(pointer);
+    const [x, y] = point(event);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + .1, y);
+    ctx.stroke();
+    check.disabled = false;
+  };
+  pad.onpointermove = event => {
+    if (event.pointerId !== pointer) return;
+    ctx.lineTo(...point(event));
+    ctx.stroke();
+  };
+  pad.onlostpointercapture = () => { pointer = null; };
+  erase.onclick = () => {
+    ctx.clearRect(0, 0, pad.width, pad.height);
+    check.disabled = true;
+  };
+  check.onclick = () => {
+    solution.textContent = '正解：' + question.correct + '（' + question.sound + '）。請對照字形，自行判斷。';
+    solution.hidden = false;
+    controls.hidden = false;
+    check.disabled = true;
+    erase.disabled = true;
+    document.querySelector('#right-writing').focus();
+  };
+  document.querySelector('#right-writing').onclick = () => {
+    controls.hidden = true;
+    submit(true);
+  };
+  document.querySelector('#wrong-writing').onclick = () => {
+    controls.hidden = true;
+    submit(false);
+  };
+}
+
+function reviewMixed() {
+  const completed = lessons.flatMap((_, index) => index in saved.done ? makeQuestions(index) : []);
+  quiz(shuffle(completed).slice(0, 15), 'mixed');
 }
 
 function reviewWrong() {
