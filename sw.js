@@ -1,7 +1,9 @@
-const cacheName = 'japanese-starter-v1';
-const files = ['./', './index.html', './style.css', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const cacheName = 'japanese-starter-v2';
+const files = ['./', './index.html', './style.css', './app.js', './memory.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)));
+  event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(
+    files.map(file => new Request(file, {cache: 'reload'}))
+  )).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(names => Promise.all(names

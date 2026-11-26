@@ -57,12 +57,12 @@ function home() {
   if (hasSpeech) window.speechSynthesis.cancel();
   const completed = Object.keys(saved.done).length;
   const next = lessons.findIndex((_, index) => !(index in saved.done));
-  render(`<section class="hero"><h1>每天 10 分鐘，學一點日文</h1>
+  render(`<section class="hero"><div class="companions" aria-hidden="true"><span>🐱</span><span>🐰</span><span>🦊</span></div><h1>每天 10 分鐘，學一點日文</h1>
     <p>認識平假名，練一句生活日文，再用小測驗檢查自己記住了多少。</p>
-    <p>已完成 ${completed}／${lessons.length} 課</p>
+    <p>已完成 ${completed}／${lessons.length} 課</p><progress aria-label="課程完成進度" value="${completed}" max="${lessons.length}"></progress>
     <button class="primary" id="start">${next < 0 ? '重溫第一課' : '開始第 ' + (next + 1) + ' 課'}</button></section>
     <h2>平假名入門</h2><div class="lessons">${lessons.map((lesson, index) =>
-    `<button class="lesson" data-lesson="${index}"><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>`);
+    `<button class="lesson" data-lesson="${index}"><span class="lesson-animal" aria-hidden="true">${mascots[index]}</span><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>`);
   document.querySelector('#start').onclick = () => study(Math.max(0, next));
   screen.querySelectorAll('[data-lesson]').forEach(button => {
     button.onclick = () => study(Number(button.dataset.lesson));
@@ -74,10 +74,12 @@ function study(index, step = 0) {
   const lesson = lessons[index];
   const card = lesson.cards[step];
   const text = card ? card.letter : lesson.phrase;
+  const [picture, reminder] = card ? memory[index][step] : [mascots[index], lesson.tip];
   render(`<section class="panel"><h1>第 ${index + 1} 課 · ${card ? '假名卡片' : '生活用語'}</h1>
     <progress aria-label="本課學習進度" value="${step + 1}" max="${lesson.cards.length + 1}"></progress>
-    <div class="kana" lang="ja">${text}</div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
-    <p>${card ? '聽一次，跟念兩次，再試著看著假名自己念。' : lesson.meaning + '。' + lesson.tip}</p>
+    <div class="study-stage"><div class="study-animal" aria-hidden="true">${mascots[index]}</div><div class="kana" lang="ja">${text}</div></div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
+    <p>${card ? '聽一次，跟念兩次，再試著看著假名自己念。' : lesson.meaning}</p>
+    <aside class="memory-tip"><span class="memory-picture" aria-hidden="true">${picture}</span><div><h2>${card ? '記憶小叮嚀' : '開口小叮嚀'}</h2><p>${reminder}</p></div></aside>
     <div class="row"><button id="listen">聽發音</button>
     ${step ? '<button id="previous">上一張</button>' : ''}
     <button class="primary" id="next">${card ? '下一張' : '開始小測驗'}</button></div>
@@ -117,7 +119,7 @@ function quiz(questions, lessonIndex, position = 0, score = 0) {
   const review = lessonIndex === null;
   if (!question) {
     if (!review) { saved.done[lessonIndex] = score; store(); }
-    render(`<section class="panel"><h1>${review ? '複習完成' : '本課完成'}</h1><p>答對 ${score}／${questions.length} 題</p>
+    render(`<section class="panel"><div class="result-animal" aria-hidden="true">${review ? '🐾' : mascots[lessonIndex]}</div><h1>${review ? '複習完成' : '本課完成'}</h1><p>答對 ${score}／${questions.length} 題</p>
       <div class="row"><button class="primary" id="back">回首頁</button><button id="again">${review ? '再看錯題' : '再練一次'}</button></div></section>`);
     document.querySelector('#back').onclick = home;
     document.querySelector('#again').onclick = () => review ? reviewWrong() : quiz(makeQuestions(lessonIndex), lessonIndex);
