@@ -62,6 +62,7 @@ function resources() {
     <p>看完影片後，回到卡片練習。先遮住拼音，自己試念，再按「聽發音」確認。</p>
     <ul><li><a href="https://www.youtube.com/shorts/b69m9uAhLiI" target="_blank" rel="noopener noreferrer">在 YouTube 觀看原影片</a></li>
     <li><a href="https://www.youtube.com/watch?v=DvjltwT2H2g&amp;list=PLhGTbECrW2wSAWsVPTwGCJFWTV2W8pPKm" target="_blank" rel="noopener noreferrer">影片說明欄的詳細教學</a></li>
+    <li><a href="https://www.wusjp.com/日文五十音學習/" target="_blank" rel="noopener noreferrer">字源與 4–4–2 記憶法（作者的文字說明）</a></li>
     <li><a href="https://www.wusjp.com/" target="_blank" rel="noopener noreferrer">吳氏日文官網</a></li></ul>
     </section>`);
 }
@@ -87,17 +88,26 @@ function study(index, step = 0) {
   const lesson = lessons[index];
   const card = lesson.cards[step];
   const text = card ? card.letter : lesson.phrase;
+  const group = kanaGroups[index < 4 ? 0 : index < 8 ? 1 : 2];
+  const origin = kanaOrigins[index].split(' ')[step];
   const [picture, reminder] = card ? memory[index][step] : ['💬', lesson.tip];
   render(`<section class="panel"><h1>第 ${index + 1} 課 · ${card ? '假名卡片' : '生活用語'}</h1>
     <progress aria-label="本課學習進度" value="${step + 1}" max="${lesson.cards.length + 1}"></progress>
     <div class="study-stage">${seal}<div class="kana" lang="ja">${text}</div></div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
     <p>${card ? '聽一次，跟念兩次，再試著看著假名自己念。' : lesson.meaning}</p>
     <aside class="memory-tip"><span class="memory-picture" aria-hidden="true">${picture}</span><div><h2>${card ? '記憶小叮嚀' : '開口小叮嚀'}</h2><p>${reminder}</p></div></aside>
+    ${card ? `<aside class="memory-tip"><div><h2>海豹小叮嚀｜字源＋分組記憶</h2>
+      <p><strong>${origin} → <span lang="ja">${card.letter}</span></strong>。先看漢字和假名各一眼，再遮住假名，試著寫出來並念「${card.sound}」。</p>
+      ${step === 0 ? `<p><strong>行首分成四、四、二拍：</strong><span lang="ja">${kanaGroups.map(([letters]) => letters).join(' ／ ')}</span>。</p>
+      <p>這課先念所在的一組：${group[1]}。再按「聽發音」，確認今天的行首「${card.letter}」怎麼念。</p>` : ''}
+      <button id="tip-source">看方法來源</button></div></aside>` : ''}
     <div class="row"><button id="listen">聽發音</button>
     ${step ? '<button id="previous">上一張</button>' : ''}
     <button class="primary" id="next">${card ? '下一張' : '開始小測驗'}</button></div>
     <p class="feedback" id="audio" role="status"></p></section>`);
   document.querySelector('#listen').onclick = () => speak(text, document.querySelector('#audio'));
+  const source = document.querySelector('#tip-source');
+  if (source) source.onclick = resources;
   const previous = document.querySelector('#previous');
   if (previous) previous.onclick = () => study(index, step - 1);
   document.querySelector('#next').onclick = () => card ? study(index, step + 1) : quiz(makeQuestions(index), index);
