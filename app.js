@@ -53,16 +53,29 @@ function render(html) {
   window.scrollTo(0, 0);
 }
 
+const seal = '<img class="seal" src="seal.webp" width="144" height="144" alt="海豹小助教">';
+
+function resources() {
+  render(`<section class="panel">${seal}<h1>學習資源</h1>
+    <h2>⚡50音怎麼背比較快?!</h2>
+    <p>影片來源：吳氏日本語：奇跡的な速攻法</p>
+    <p>看完影片後，回到卡片練習。先遮住拼音，自己試念，再按「聽發音」確認。</p>
+    <ul><li><a href="https://www.youtube.com/shorts/b69m9uAhLiI" target="_blank" rel="noopener noreferrer">在 YouTube 觀看原影片</a></li>
+    <li><a href="https://www.youtube.com/watch?v=DvjltwT2H2g&amp;list=PLhGTbECrW2wSAWsVPTwGCJFWTV2W8pPKm" target="_blank" rel="noopener noreferrer">影片說明欄的詳細教學</a></li>
+    <li><a href="https://www.wusjp.com/" target="_blank" rel="noopener noreferrer">吳氏日文官網</a></li></ul>
+    </section>`);
+}
+
 function home() {
   if (hasSpeech) window.speechSynthesis.cancel();
   const completed = Object.keys(saved.done).length;
   const next = lessons.findIndex((_, index) => !(index in saved.done));
-  render(`<section class="hero"><div class="companions" aria-hidden="true"><span>🐱</span><span>🐰</span><span>🦊</span></div><h1>每天 10 分鐘，學一點日文</h1>
+  render(`<section class="hero"><div class="seal-welcome">${seal}<p>我是小海豹，今天一起學一句日文吧！</p></div><h1>每天 10 分鐘，學一點日文</h1>
     <p>認識平假名，練一句生活日文，再用小測驗檢查自己記住了多少。</p>
     <p>已完成 ${completed}／${lessons.length} 課</p><progress aria-label="課程完成進度" value="${completed}" max="${lessons.length}"></progress>
     <button class="primary" id="start">${next < 0 ? '重溫第一課' : '開始第 ' + (next + 1) + ' 課'}</button></section>
     <h2>平假名入門</h2><div class="lessons">${lessons.map((lesson, index) =>
-    `<button class="lesson" data-lesson="${index}"><span class="lesson-animal" aria-hidden="true">${mascots[index]}</span><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>`);
+    `<button class="lesson" data-lesson="${index}"><small>第 ${index + 1} 課 ${index in saved.done ? '・已完成' : ''}</small><span lang="ja">${lesson.kana}</span><small>${lesson.meaning}</small></button>`).join('')}</div>`);
   document.querySelector('#start').onclick = () => study(Math.max(0, next));
   screen.querySelectorAll('[data-lesson]').forEach(button => {
     button.onclick = () => study(Number(button.dataset.lesson));
@@ -74,10 +87,10 @@ function study(index, step = 0) {
   const lesson = lessons[index];
   const card = lesson.cards[step];
   const text = card ? card.letter : lesson.phrase;
-  const [picture, reminder] = card ? memory[index][step] : [mascots[index], lesson.tip];
+  const [picture, reminder] = card ? memory[index][step] : ['💬', lesson.tip];
   render(`<section class="panel"><h1>第 ${index + 1} 課 · ${card ? '假名卡片' : '生活用語'}</h1>
     <progress aria-label="本課學習進度" value="${step + 1}" max="${lesson.cards.length + 1}"></progress>
-    <div class="study-stage"><div class="study-animal" aria-hidden="true">${mascots[index]}</div><div class="kana" lang="ja">${text}</div></div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
+    <div class="study-stage">${seal}<div class="kana" lang="ja">${text}</div></div><p><strong>${card ? card.sound : lesson.reading}</strong></p>
     <p>${card ? '聽一次，跟念兩次，再試著看著假名自己念。' : lesson.meaning}</p>
     <aside class="memory-tip"><span class="memory-picture" aria-hidden="true">${picture}</span><div><h2>${card ? '記憶小叮嚀' : '開口小叮嚀'}</h2><p>${reminder}</p></div></aside>
     <div class="row"><button id="listen">聽發音</button>
@@ -103,11 +116,11 @@ function makeQuestions(index) {
   const lesson = lessons[index];
   const cards = shuffle(lesson.cards);
   return [
-    ...cards.map((card, position) => ({
-      id: index + '-kana-' + card.letter, correct: card.letter, sound: card.sound,
-      audio: position % 2 === 0,
+    ...[true, false].flatMap(audio => shuffle(cards).map(card => ({
+      id: index + (audio ? '-listen-' : '-identify-') + card.letter,
+      correct: card.letter, sound: card.sound, audio,
       options: shuffle([card.letter, ...shuffle(cards.filter(other => other !== card)).slice(0, 2).map(other => other.letter)])
-    })),
+    }))),
     {id: index + '-phrase', phrase: lesson.phrase, correct: lesson.meaning,
       options: shuffle([lesson.meaning, ...shuffle(lessons.filter(other => other !== lesson)).slice(0, 2).map(other => other.meaning)])}
   ];
@@ -119,7 +132,7 @@ function quiz(questions, lessonIndex, position = 0, score = 0) {
   const review = lessonIndex === null;
   if (!question) {
     if (!review) { saved.done[lessonIndex] = score; store(); }
-    render(`<section class="panel"><div class="result-animal" aria-hidden="true">${review ? '🐾' : mascots[lessonIndex]}</div><h1>${review ? '複習完成' : '本課完成'}</h1><p>答對 ${score}／${questions.length} 題</p>
+    render(`<section class="panel">${seal}<h1>${review ? '複習完成' : '本課完成'}</h1><p>答對 ${score}／${questions.length} 題</p>
       <div class="row"><button class="primary" id="back">回首頁</button><button id="again">${review ? '再看錯題' : '再練一次'}</button></div></section>`);
     document.querySelector('#back').onclick = home;
     document.querySelector('#again').onclick = () => review ? reviewWrong() : quiz(makeQuestions(lessonIndex), lessonIndex);
@@ -129,7 +142,7 @@ function quiz(questions, lessonIndex, position = 0, score = 0) {
   const prompt = question.phrase ? `<span lang="ja">${question.phrase}</span> 是什麼意思？`
     : listen ? '聽發音，選出對應的假名。' : `哪個假名念作 <strong>${question.sound}</strong>？`;
   render(`<section class="panel"><h1>${review ? '錯題複習' : '小測驗'} · ${position + 1}／${questions.length}</h1>
-    <p>${prompt}</p>${listen ? '<div class="row"><button id="play">播放題目</button><button id="hint">看拼音提示</button></div><p id="audio" role="status"></p>' : ''}
+    <p class="question-kind">${question.phrase ? '生活用語' : listen ? '聽音辨認' : '看拼音指認'}</p><p>${prompt}</p>${listen ? '<div class="row"><button id="play">播放題目</button><button id="hint">看拼音提示</button></div><p id="audio" role="status"></p>' : ''}
     <div class="options">${question.options.map((option, index) => `<button data-answer="${index}" ${question.phrase ? '' : 'lang="ja"'}>${option}</button>`).join('')}</div>
     <p class="feedback" id="feedback" role="status"></p><button class="primary" id="continue" hidden>繼續</button></section>`);
   if (listen) {
@@ -160,6 +173,7 @@ function reviewWrong() {
 }
 
 document.querySelector('#home').onclick = home;
+document.querySelector('#resources').onclick = resources;
 document.querySelector('#review').onclick = reviewWrong;
 home();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);

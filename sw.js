@@ -1,5 +1,5 @@
-const cacheName = 'japanese-starter-v2';
-const files = ['./', './index.html', './style.css', './app.js', './memory.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const cacheName = 'japanese-starter-v3';
+const files = ['./', './index.html', './style.css', './app.js', './memory.js', './seal.webp', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(
     files.map(file => new Request(file, {cache: 'reload'}))

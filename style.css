@@ -29,3 +29,11 @@ progress{accent-color:#785098}
 .memory-tip h2{font-size:1rem;margin:0 0 3px;color:#63377f}
 .memory-tip p{font-size:.94rem;margin:0}
 .feedback{color:#674285}
+
+header nav{display:flex;gap:5px}
+header nav button{padding:5px 8px;font-size:.86rem}
+.seal{display:block;object-fit:contain;width:clamp(84px,23vw,144px);height:auto;aspect-ratio:1}
+.seal-welcome{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.seal-welcome p{background:#fffafc;border-radius:18px;padding:10px 14px;margin:0;max-width:220px}
+.study-stage .seal{width:clamp(62px,18vw,104px);flex:none}
+.question-kind{font-weight:700;color:#674285;margin-bottom:6px}
